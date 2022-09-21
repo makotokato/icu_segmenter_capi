@@ -1,0 +1,55 @@
+# This file is part of ICU4X. For terms of use, please see the file
+# called LICENSE at the top level of the ICU4X source tree
+# (online at: https://github.com/unicode-org/icu4x/blob/main/LICENSE ).
+
+[package]
+name = "icu_segmenter_capi"
+description = "C interface to ICU4X's segmenter"
+version = "0.1.0"
+authors = ["The ICU4X Project Developers"]
+edition = "2021"
+resolver = "2"
+repository = "https://github.com/makotokato/icu_segmenter_capi"
+license = "Unicode-DFS-2016"
+categories = ["internationalization"]
+# Keep this in sync with other crates unless there are exceptions
+include = [
+    "src/**/*",
+    "examples/**/*",
+    "benches/**/*",
+    "tests/**/*",
+    "**/include/**/*",
+    "Cargo.toml",
+    "LICENSE",
+    "README.md"
+]
+
+[package.metadata.docs.rs]
+all-features = true
+
+# Please keep the features list in sync with the icu_capi_staticlib crate
+[features]
+default = ["buffer_provider"]
+serde = [
+    "dep:serde",
+    "icu_locid/serde",
+    "icu_provider/serde",
+    "icu_segmenter/serde",
+]
+buffer_provider = ["serde", "icu_provider_adapters/serde"]
+
+[dependencies]
+icu_locid = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+icu_provider = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+icu_provider_adapters = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+icu_provider_blob = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+icu_segmenter = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+serde = { version = "1.0", default-features = false, optional = true }
+writeable = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+
+# Run `cargo make diplomat-install` to get the right diplomat binary installed
+# The version here can either be a `version = ".."` spec or `git = "https://github.com/rust-diplomat/diplomat", rev = ".."`
+# Since this crate is published, Diplomat must be published preceding a new ICU4X release but may use git versions in between
+# ALSO MAKE SURE TO UPDATE ffi_coverage/Cargo.toml!
+diplomat = { git = "https://github.com/rust-diplomat/diplomat", rev = "82e2e74c1f3c04b0360529aa7c019b2c56f3216d" }
+diplomat-runtime = { git = "https://github.com/rust-diplomat/diplomat", rev = "82e2e74c1f3c04b0360529aa7c019b2c56f3216d" }
