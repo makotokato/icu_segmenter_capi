@@ -6,6 +6,7 @@ use self::ffi::ICU4XError;
 use core::fmt;
 use icu_locid::ParserError;
 use icu_provider::{DataError, DataErrorKind};
+use icu_segmenter::SegmenterError;
 
 #[diplomat::bridge]
 pub mod ffi {
@@ -19,6 +20,7 @@ pub mod ffi {
     #[diplomat::rust_link(icu::locid::ParserError, Enum, compact)]
     #[diplomat::rust_link(icu::provider::DataError, Struct, compact)]
     #[diplomat::rust_link(icu::provider::DataErrorKind, Enum, compact)]
+    #[diplomat::rust_link(icu::segmenter::SegmenterError, Enum, compact)]
     pub enum ICU4XError {
         // general errors
         /// The error is not currently categorized as ICU4XError.
@@ -28,7 +30,6 @@ pub mod ffi {
         /// Typically found when not enough space is allocated
         /// Most APIs that return a string may return this error
         WriteableError = 0x01,
-
         // Some input was out of bounds
         OutOfBoundsError = 0x02,
 
@@ -63,6 +64,20 @@ pub mod ffi {
     }
 }
 
+#[cfg(feature = "logging")]
+#[inline]
+pub(crate) fn log_conversion<T: core::fmt::Display>(e: &T, ffi_error: ICU4XError) {
+    use core::any;
+    log::warn!(
+        "Returning ICU4XError::{:?} based on original {}: {}",
+        ffi_error,
+        any::type_name::<T>(),
+        e
+    );
+}
+
+#[cfg(not(feature = "logging"))]
+#[inline]
 pub(crate) fn log_conversion<T: core::fmt::Display>(_e: &T, _ffi_error: ICU4XError) {}
 
 impl From<fmt::Error> for ICU4XError {
@@ -84,11 +99,27 @@ impl From<DataError> for ICU4XError {
             DataErrorKind::MissingPayload => ICU4XError::DataMissingPayloadError,
             DataErrorKind::InvalidState => ICU4XError::DataInvalidStateError,
             DataErrorKind::Custom => ICU4XError::DataCustomError,
+            #[cfg(all(
+                feature = "provider_fs",
+                not(any(target_arch = "wasm32", target_os = "none"))
+            ))]
+            DataErrorKind::Io(..) => ICU4XError::DataIoError,
             // datagen only
             // DataErrorKind::MissingSourceData(..) => ..,
             DataErrorKind::UnavailableBufferFormat(..) => {
                 ICU4XError::DataUnavailableBufferFormatError
             }
+            _ => ICU4XError::UnknownError,
+        };
+        log_conversion(&e, ret);
+        ret
+    }
+}
+
+impl From<SegmenterError> for ICU4XError {
+    fn from(e: SegmenterError) -> Self {
+        let ret = match e {
+            SegmenterError::Data(e) => e.into(),
             _ => ICU4XError::UnknownError,
         };
         log_conversion(&e, ret);

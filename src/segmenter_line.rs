@@ -43,7 +43,7 @@ pub mod ffi {
     }
 
     #[diplomat::rust_link(icu::segmenter::LineBreakOptions, Struct)]
-    pub struct ICU4XLineBreakOptions {
+    pub struct ICU4XLineBreakOptionsV1 {
         pub line_break_rule: ICU4XLineBreakRule,
         pub word_break_rule: ICU4XWordBreakRule,
         pub ja_zh: bool,
@@ -60,8 +60,8 @@ pub mod ffi {
 
     impl ICU4XLineBreakSegmenter {
         /// Construct a [`ICU4XLineBreakSegmenter`] with default options.
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::try_new, FnInStruct)]
-        pub fn try_new(
+        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::try_new_unstable, FnInStruct)]
+        pub fn create(
             provider: &ICU4XDataProvider,
         ) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError> {
             Self::try_new_impl(&provider.0)
@@ -74,24 +74,27 @@ pub mod ffi {
                 + DataProvider<LstmDataV1Marker>
                 + ?Sized,
         {
-            LineBreakSegmenter::try_new(provider)
+            LineBreakSegmenter::try_new_unstable(provider)
                 .map(|o| Box::new(ICU4XLineBreakSegmenter(o)))
                 .map_err(Into::into)
                 .into()
         }
 
         /// Construct a [`ICU4XLineBreakSegmenter`] with custom options.
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::try_new_with_options, FnInStruct)]
-        pub fn try_new_with_options(
+        #[diplomat::rust_link(
+            icu::segmenter::LineBreakSegmenter::try_new_with_options_unstable,
+            FnInStruct
+        )]
+        pub fn create_with_options_v1(
             provider: &ICU4XDataProvider,
-            options: ICU4XLineBreakOptions,
+            options: ICU4XLineBreakOptionsV1,
         ) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError> {
             Self::try_new_with_options_impl(&provider.0, options)
         }
 
         fn try_new_with_options_impl<D>(
             provider: &D,
-            options: ICU4XLineBreakOptions,
+            options: ICU4XLineBreakOptionsV1,
         ) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError>
         where
             D: DataProvider<LineBreakDataV1Marker>
@@ -99,7 +102,7 @@ pub mod ffi {
                 + DataProvider<LstmDataV1Marker>
                 + ?Sized,
         {
-            LineBreakSegmenter::try_new_with_options(provider, options.into())
+            LineBreakSegmenter::try_new_with_options_unstable(provider, options.into())
                 .map(|o| Box::new(ICU4XLineBreakSegmenter(o)))
                 .map_err(Into::into)
                 .into()
@@ -190,8 +193,8 @@ impl From<ffi::ICU4XWordBreakRule> for WordBreakRule {
     }
 }
 
-impl From<ffi::ICU4XLineBreakOptions> for LineBreakOptions {
-    fn from(other: ffi::ICU4XLineBreakOptions) -> Self {
+impl From<ffi::ICU4XLineBreakOptionsV1> for LineBreakOptions {
+    fn from(other: ffi::ICU4XLineBreakOptionsV1) -> Self {
         let mut options = LineBreakOptions::default();
         options.line_break_rule = other.line_break_rule.into();
         options.word_break_rule = other.word_break_rule.into();

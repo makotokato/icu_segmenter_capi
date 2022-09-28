@@ -39,17 +39,17 @@ serde = [
 buffer_provider = ["serde", "icu_provider_adapters/serde"]
 
 [dependencies]
-icu_locid = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
-icu_provider = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
-icu_provider_adapters = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
-icu_provider_blob = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
-icu_segmenter = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+icu_locid = { version = "1.0" }
+icu_provider = { version = "1.0" }
+icu_provider_adapters = { version = "1.0" }
+icu_provider_blob = { version = "1.0" }
+icu_segmenter = { version = "0.7" }
 serde = { version = "1.0", default-features = false, optional = true }
-writeable = { git = "https://github.com/unicode-org/icu4x", rev = "7bffd2fd4299b98f2a1c614587569d2f622ba152" }
+writeable = { version = "0.5.0" }
 
 # Run `cargo make diplomat-install` to get the right diplomat binary installed
 # The version here can either be a `version = ".."` spec or `git = "https://github.com/rust-diplomat/diplomat", rev = ".."`
 # Since this crate is published, Diplomat must be published preceding a new ICU4X release but may use git versions in between
 # ALSO MAKE SURE TO UPDATE ffi_coverage/Cargo.toml!
-diplomat = { git = "https://github.com/rust-diplomat/diplomat", rev = "82e2e74c1f3c04b0360529aa7c019b2c56f3216d" }
-diplomat-runtime = { git = "https://github.com/rust-diplomat/diplomat", rev = "82e2e74c1f3c04b0360529aa7c019b2c56f3216d" }
+diplomat = { version = "0.4.0" }
+diplomat-runtime = { version = "0.4.0" }
