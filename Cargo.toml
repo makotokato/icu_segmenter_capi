@@ -43,7 +43,7 @@ icu_locid = { version = "1.0" }
 icu_provider = { version = "1.0" }
 icu_provider_adapters = { version = "1.0" }
 icu_provider_blob = { version = "1.0" }
-icu_segmenter = { version = "0.7" }
+icu_segmenter = { version = "0.7", features = ["lstm"] }
 serde = { version = "1.0", default-features = false, optional = true }
 writeable = { version = "0.5.0" }
 
