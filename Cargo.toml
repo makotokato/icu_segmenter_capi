@@ -4,8 +4,8 @@
 
 [package]
 name = "icu_segmenter_capi"
-description = "C interface to ICU4X's segmenter"
-version = "0.1.0"
+description = "C interface to ICU4X"
+version = "1.1.0"
 authors = ["The ICU4X Project Developers"]
 edition = "2021"
 resolver = "2"
@@ -27,29 +27,34 @@ include = [
 [package.metadata.docs.rs]
 all-features = true
 
-# Please keep the features list in sync with the icu_capi_staticlib crate
+# Please keep the features list in sync with the icu_capi_staticlib/icu_capi_cdylib crates
 [features]
-default = ["buffer_provider"]
-serde = [
+default = ["any_provider"]
+any_provider = []
+buffer_provider = [
+    "dep:icu_provider_blob",
     "dep:serde",
     "icu_locid/serde",
     "icu_provider/serde",
+    "icu_provider_adapters/serde",
     "icu_segmenter/serde",
 ]
-buffer_provider = ["serde", "icu_provider_adapters/serde"]
 
 [dependencies]
-icu_locid = { version = "1.0" }
-icu_provider = { version = "1.0" }
-icu_provider_adapters = { version = "1.0" }
-icu_provider_blob = { version = "1.0" }
-icu_segmenter = { version = "0.7", features = ["lstm"] }
+icu_collections = { version = "1.1.0" }
+icu_locid = { version = "1.1.0" }
+icu_provider = { version = "1.1.0" }
+icu_provider_adapters = { version = "1.1.0" }
+icu_segmenter = { version = "0.8.0", features = ["lstm"] }
+tinystr = { version = "0.7.1", default-features = false }
+writeable = { version = "0.5.1" }
+
+icu_provider_blob = { version = "1.1.0", optional = true }
 serde = { version = "1.0", default-features = false, optional = true }
-writeable = { version = "0.5.0" }
 
 # Run `cargo make diplomat-install` to get the right diplomat binary installed
 # The version here can either be a `version = ".."` spec or `git = "https://github.com/rust-diplomat/diplomat", rev = ".."`
 # Since this crate is published, Diplomat must be published preceding a new ICU4X release but may use git versions in between
 # ALSO MAKE SURE TO UPDATE ffi_coverage/Cargo.toml!
-diplomat = { version = "0.4.0" }
-diplomat-runtime = { version = "0.4.0" }
+diplomat = "0.5"
+diplomat-runtime = "0.5"

@@ -7,6 +7,7 @@ use core::fmt;
 use icu_locid::ParserError;
 use icu_provider::{DataError, DataErrorKind};
 use icu_segmenter::SegmenterError;
+use tinystr::TinyStrError;
 
 #[diplomat::bridge]
 pub mod ffi {
@@ -61,35 +62,30 @@ pub mod ffi {
         // data struct errors
         /// Attempted to construct an invalid data struct
         DataStructValidityError = 0x3_00,
+
+        // tinystr errors
+        TinyStrTooLargeError = 0x9_00,
+        TinyStrContainsNullError = 0x9_01,
+        TinyStrNonAsciiError = 0x9_02,
     }
 }
 
-#[cfg(feature = "logging")]
-#[inline]
-pub(crate) fn log_conversion<T: core::fmt::Display>(e: &T, ffi_error: ICU4XError) {
-    use core::any;
-    log::warn!(
-        "Returning ICU4XError::{:?} based on original {}: {}",
-        ffi_error,
-        any::type_name::<T>(),
-        e
-    );
+impl ICU4XError {
+    #[inline]
+    pub(crate) fn log_original<T: core::fmt::Display + ?Sized>(self, _e: &T) -> Self {
+        self
+    }
 }
-
-#[cfg(not(feature = "logging"))]
-#[inline]
-pub(crate) fn log_conversion<T: core::fmt::Display>(_e: &T, _ffi_error: ICU4XError) {}
 
 impl From<fmt::Error> for ICU4XError {
     fn from(e: fmt::Error) -> Self {
-        log_conversion(&e, ICU4XError::WriteableError);
-        ICU4XError::WriteableError
+        ICU4XError::WriteableError.log_original(&e)
     }
 }
 
 impl From<DataError> for ICU4XError {
     fn from(e: DataError) -> Self {
-        let ret = match e.kind {
+        match e.kind {
             DataErrorKind::MissingDataKey => ICU4XError::DataMissingDataKeyError,
             DataErrorKind::MissingLocale => ICU4XError::DataMissingLocaleError,
             DataErrorKind::NeedsLocale => ICU4XError::DataNeedsLocaleError,
@@ -110,32 +106,41 @@ impl From<DataError> for ICU4XError {
                 ICU4XError::DataUnavailableBufferFormatError
             }
             _ => ICU4XError::UnknownError,
-        };
-        log_conversion(&e, ret);
-        ret
+        }
+        .log_original(&e)
     }
 }
 
 impl From<SegmenterError> for ICU4XError {
     fn from(e: SegmenterError) -> Self {
-        let ret = match e {
+        match e {
             SegmenterError::Data(e) => e.into(),
             _ => ICU4XError::UnknownError,
-        };
-        log_conversion(&e, ret);
-        ret
+        }
+        .log_original(&e)
     }
 }
 
 impl From<ParserError> for ICU4XError {
     fn from(e: ParserError) -> Self {
-        let ret = match e {
+        match e {
             ParserError::InvalidLanguage => ICU4XError::LocaleParserLanguageError,
             ParserError::InvalidSubtag => ICU4XError::LocaleParserSubtagError,
             ParserError::InvalidExtension => ICU4XError::LocaleParserExtensionError,
             _ => ICU4XError::UnknownError,
-        };
-        log_conversion(&e, ret);
-        ret
+        }
+        .log_original(&e)
+    }
+}
+
+impl From<TinyStrError> for ICU4XError {
+    fn from(e: TinyStrError) -> Self {
+        match e {
+            TinyStrError::TooLarge { .. } => ICU4XError::TinyStrTooLargeError,
+            TinyStrError::ContainsNull => ICU4XError::TinyStrContainsNullError,
+            TinyStrError::NonAscii => ICU4XError::TinyStrNonAsciiError,
+            _ => ICU4XError::UnknownError,
+        }
+        .log_original(&e)
     }
 }

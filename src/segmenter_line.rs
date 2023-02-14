@@ -12,20 +12,20 @@ pub mod ffi {
     use crate::provider::ffi::ICU4XDataProvider;
     use alloc::boxed::Box;
     use core::convert::TryFrom;
-    use diplomat_runtime::DiplomatResult;
     use icu_provider::DataProvider;
     use icu_segmenter::provider::{
-        LineBreakDataV1Marker, LstmDataV1Marker, UCharDictionaryBreakDataV1Marker,
+        GraphemeClusterBreakDataV1Marker, LineBreakDataV1Marker, LstmDataV1Marker,
+        UCharDictionaryBreakDataV1Marker,
     };
     use icu_segmenter::{
         LineBreakIteratorLatin1, LineBreakIteratorPotentiallyIllFormedUtf8, LineBreakIteratorUtf16,
-        LineBreakSegmenter,
+        LineSegmenter,
     };
 
     #[diplomat::opaque]
     /// An ICU4X line-break segmenter, capable of finding breakpoints in strings.
-    #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter, Struct)]
-    pub struct ICU4XLineBreakSegmenter(LineBreakSegmenter);
+    #[diplomat::rust_link(icu::segmenter::LineSegmenter, Struct)]
+    pub struct ICU4XLineSegmenter(LineSegmenter);
 
     #[diplomat::rust_link(icu::segmenter::LineBreakRule, Enum)]
     pub enum ICU4XLineBreakRule {
@@ -58,66 +58,64 @@ pub mod ffi {
     #[diplomat::opaque]
     pub struct ICU4XLineBreakIteratorLatin1<'a>(LineBreakIteratorLatin1<'a, 'a>);
 
-    impl ICU4XLineBreakSegmenter {
-        /// Construct a [`ICU4XLineBreakSegmenter`] with default options.
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::try_new_unstable, FnInStruct)]
-        pub fn create(
-            provider: &ICU4XDataProvider,
-        ) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError> {
+    impl ICU4XLineSegmenter {
+        /// Construct a [`ICU4XLineSegmenter`] with default options.
+        #[diplomat::rust_link(icu::segmenter::LineSegmenter::try_new_unstable, FnInStruct)]
+        pub fn create(provider: &ICU4XDataProvider) -> Result<Box<ICU4XLineSegmenter>, ICU4XError> {
             Self::try_new_impl(&provider.0)
         }
 
-        fn try_new_impl<D>(provider: &D) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError>
+        fn try_new_impl<D>(provider: &D) -> Result<Box<ICU4XLineSegmenter>, ICU4XError>
         where
             D: DataProvider<LineBreakDataV1Marker>
                 + DataProvider<UCharDictionaryBreakDataV1Marker>
                 + DataProvider<LstmDataV1Marker>
+                + DataProvider<GraphemeClusterBreakDataV1Marker>
                 + ?Sized,
         {
-            LineBreakSegmenter::try_new_unstable(provider)
-                .map(|o| Box::new(ICU4XLineBreakSegmenter(o)))
-                .map_err(Into::into)
-                .into()
+            Ok(Box::new(ICU4XLineSegmenter(
+                LineSegmenter::try_new_unstable(provider)?,
+            )))
         }
 
-        /// Construct a [`ICU4XLineBreakSegmenter`] with custom options.
+        /// Construct a [`ICU4XLineSegmenter`] with custom options.
         #[diplomat::rust_link(
-            icu::segmenter::LineBreakSegmenter::try_new_with_options_unstable,
+            icu::segmenter::LineSegmenter::try_new_with_options_unstable,
             FnInStruct
         )]
         pub fn create_with_options_v1(
             provider: &ICU4XDataProvider,
             options: ICU4XLineBreakOptionsV1,
-        ) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError> {
+        ) -> Result<Box<ICU4XLineSegmenter>, ICU4XError> {
             Self::try_new_with_options_impl(&provider.0, options)
         }
 
         fn try_new_with_options_impl<D>(
             provider: &D,
             options: ICU4XLineBreakOptionsV1,
-        ) -> DiplomatResult<Box<ICU4XLineBreakSegmenter>, ICU4XError>
+        ) -> Result<Box<ICU4XLineSegmenter>, ICU4XError>
         where
             D: DataProvider<LineBreakDataV1Marker>
                 + DataProvider<UCharDictionaryBreakDataV1Marker>
                 + DataProvider<LstmDataV1Marker>
+                + DataProvider<GraphemeClusterBreakDataV1Marker>
                 + ?Sized,
         {
-            LineBreakSegmenter::try_new_with_options_unstable(provider, options.into())
-                .map(|o| Box::new(ICU4XLineBreakSegmenter(o)))
-                .map_err(Into::into)
-                .into()
+            Ok(Box::new(ICU4XLineSegmenter(
+                LineSegmenter::try_new_with_options_unstable(provider, options.into())?,
+            )))
         }
 
         /// Segments a (potentially ill-formed) UTF-8 string.
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::segment_utf8, FnInStruct)]
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::segment_str, FnInStruct, hidden)]
+        #[diplomat::rust_link(icu::segmenter::LineSegmenter::segment_utf8, FnInStruct)]
+        #[diplomat::rust_link(icu::segmenter::LineSegmenter::segment_str, FnInStruct, hidden)]
         pub fn segment_utf8<'a>(&'a self, input: &'a str) -> Box<ICU4XLineBreakIteratorUtf8<'a>> {
             let input = input.as_bytes(); // #2520
             Box::new(ICU4XLineBreakIteratorUtf8(self.0.segment_utf8(input)))
         }
 
         /// Segments a UTF-16 string.
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::segment_utf16, FnInStruct)]
+        #[diplomat::rust_link(icu::segmenter::LineSegmenter::segment_utf16, FnInStruct)]
         pub fn segment_utf16<'a>(
             &'a self,
             input: &'a [u16],
@@ -126,7 +124,7 @@ pub mod ffi {
         }
 
         /// Segments a Latin-1 string.
-        #[diplomat::rust_link(icu::segmenter::LineBreakSegmenter::segment_latin1, FnInStruct)]
+        #[diplomat::rust_link(icu::segmenter::LineSegmenter::segment_latin1, FnInStruct)]
         pub fn segment_latin1<'a>(
             &'a self,
             input: &'a [u8],

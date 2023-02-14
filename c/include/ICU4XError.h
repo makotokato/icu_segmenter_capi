@@ -33,6 +33,9 @@ typedef enum ICU4XError {
   ICU4XError_LocaleParserSubtagError = 514,
   ICU4XError_LocaleParserExtensionError = 515,
   ICU4XError_DataStructValidityError = 768,
+  ICU4XError_TinyStrTooLargeError = 2304,
+  ICU4XError_TinyStrContainsNullError = 2305,
+  ICU4XError_TinyStrNonAsciiError = 2306,
 } ICU4XError;
 #ifdef __cplusplus
 } // namespace capi

@@ -8,19 +8,18 @@ pub mod ffi {
     use crate::provider::ffi::ICU4XDataProvider;
     use alloc::boxed::Box;
     use core::convert::TryFrom;
-    use diplomat_runtime::DiplomatResult;
     use icu_provider::DataProvider;
     use icu_segmenter::provider::GraphemeClusterBreakDataV1Marker;
     use icu_segmenter::{
         GraphemeClusterBreakIteratorLatin1, GraphemeClusterBreakIteratorPotentiallyIllFormedUtf8,
-        GraphemeClusterBreakIteratorUtf16, GraphemeClusterBreakSegmenter,
+        GraphemeClusterBreakIteratorUtf16, GraphemeClusterSegmenter,
     };
 
     #[diplomat::opaque]
     /// An ICU4X grapheme-cluster-break segmenter, capable of finding grapheme cluster breakpoints
     /// in strings.
-    #[diplomat::rust_link(icu::segmenter::GraphemeClusterBreakSegmenter, Struct)]
-    pub struct ICU4XGraphemeClusterBreakSegmenter(GraphemeClusterBreakSegmenter);
+    #[diplomat::rust_link(icu::segmenter::GraphemeClusterSegmenter, Struct)]
+    pub struct ICU4XGraphemeClusterSegmenter(GraphemeClusterSegmenter);
 
     #[diplomat::opaque]
     pub struct ICU4XGraphemeClusterBreakIteratorUtf8<'a>(
@@ -37,40 +36,34 @@ pub mod ffi {
         GraphemeClusterBreakIteratorLatin1<'a, 'a>,
     );
 
-    impl ICU4XGraphemeClusterBreakSegmenter {
-        /// Construct an [`ICU4XGraphemeClusterBreakSegmenter`].
+    impl ICU4XGraphemeClusterSegmenter {
+        /// Construct an [`ICU4XGraphemeClusterSegmenter`].
         #[diplomat::rust_link(
-            icu::segmenter::GraphemeClusterBreakSegmenter::try_new_unstable,
+            icu::segmenter::GraphemeClusterSegmenter::try_new_unstable,
             FnInStruct
         )]
         pub fn create(
             provider: &ICU4XDataProvider,
-        ) -> DiplomatResult<Box<ICU4XGraphemeClusterBreakSegmenter>, ICU4XError> {
+        ) -> Result<Box<ICU4XGraphemeClusterSegmenter>, ICU4XError> {
             Self::try_new_impl(&provider.0)
         }
 
-        fn try_new_impl<D>(
-            provider: &D,
-        ) -> DiplomatResult<Box<ICU4XGraphemeClusterBreakSegmenter>, ICU4XError>
+        fn try_new_impl<D>(provider: &D) -> Result<Box<ICU4XGraphemeClusterSegmenter>, ICU4XError>
         where
             D: DataProvider<GraphemeClusterBreakDataV1Marker> + ?Sized,
         {
-            GraphemeClusterBreakSegmenter::try_new_unstable(provider)
-                .map(|o| Box::new(ICU4XGraphemeClusterBreakSegmenter(o)))
-                .map_err(Into::into)
-                .into()
+            Ok(Box::new(ICU4XGraphemeClusterSegmenter(
+                GraphemeClusterSegmenter::try_new_unstable(provider)?,
+            )))
         }
 
         /// Segments a (potentially ill-formed) UTF-8 string.
         #[diplomat::rust_link(
-            icu::segmenter::GraphemeClusterBreakSegmenter::segment_str,
+            icu::segmenter::GraphemeClusterSegmenter::segment_str,
             FnInStruct,
             hidden
         )]
-        #[diplomat::rust_link(
-            icu::segmenter::GraphemeClusterBreakSegmenter::segment_utf8,
-            FnInStruct
-        )]
+        #[diplomat::rust_link(icu::segmenter::GraphemeClusterSegmenter::segment_utf8, FnInStruct)]
         pub fn segment_utf8<'a>(
             &'a self,
             input: &'a str,
@@ -82,10 +75,7 @@ pub mod ffi {
         }
 
         /// Segments a UTF-16 string.
-        #[diplomat::rust_link(
-            icu::segmenter::GraphemeClusterBreakSegmenter::segment_utf16,
-            FnInStruct
-        )]
+        #[diplomat::rust_link(icu::segmenter::GraphemeClusterSegmenter::segment_utf16, FnInStruct)]
         pub fn segment_utf16<'a>(
             &'a self,
             input: &'a [u16],
@@ -96,10 +86,7 @@ pub mod ffi {
         }
 
         /// Segments a Latin-1 string.
-        #[diplomat::rust_link(
-            icu::segmenter::GraphemeClusterBreakSegmenter::segment_latin1,
-            FnInStruct
-        )]
+        #[diplomat::rust_link(icu::segmenter::GraphemeClusterSegmenter::segment_latin1, FnInStruct)]
         pub fn segment_latin1<'a>(
             &'a self,
             input: &'a [u8],
